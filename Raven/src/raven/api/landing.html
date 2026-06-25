@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAVEN — Incident Intelligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:            #0B0B0F;
+      --bg-card:       #111118;
+      --bg-card-alt:   #0F0F16;
+      --border:        #1C1C2A;
+      --border-soft:   #161622;
+      --accent:        #6D28D9;
+      --accent-mid:    #7C3AED;
+      --accent-bright: #8B5CF6;
+      --accent-dim:    #4C1D95;
+      --accent-bg:     #160D30;
+      --text:          #E2E2EE;
+      --text-muted:    #8888A8;
+      --text-dim:      #48485E;
+      --green:         #4ADE80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Nav ──────────────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 3rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11, 11, 15, 0.94);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .nav-logo-mark {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+    }
+
+    .nav-logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+      gap: 2px;
+    }
+
+    .nav-logo-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.06em;
+    }
+
+    .nav-logo-sub {
+      font-size: 0.58rem;
+      font-weight: 600;
+      color: var(--accent-bright);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.6rem;
+    }
+
+    .nav-links a {
+      font-size: 0.855rem;
+      color: var(--text-muted);
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--accent) !important;
+      color: #fff !important;
+      padding: 0.48rem 1.05rem !important;
+      border-radius: 7px !important;
+      font-weight: 600 !important;
+      font-size: 0.855rem !important;
+      transition: background 0.15s !important;
+    }
+
+    .nav-cta:hover { background: var(--accent-dim) !important; }
+
+    /* ── Buttons ──────────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.72rem 1.45rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent-bright);
+      color: var(--accent-bright);
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────────────────── */
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4.5rem 3rem 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1.45fr;
+      gap: 3.5rem;
+      align-items: center;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--accent-bright);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.38rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent-dim);
+      margin-bottom: 1.6rem;
+      width: fit-content;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: dot-pulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes dot-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.25; }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 4vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero h1 .hi { color: var(--accent-bright); }
+
+    .hero-p1 {
+      font-size: 0.975rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 0.75rem;
+      max-width: 390px;
+    }
+
+    .hero-p2 {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 2.25rem;
+      max-width: 390px;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── Hero Visual ─────────────────────────────────────────────────────────── */
+    .hero-visual {
+      position: relative;
+      width: 100%;
+    }
+
+    .hero-visual svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    /* Animated glow pulse on center hex */
+    @keyframes hex-pulse {
+      0%, 100% { opacity: 0.55; }
+      50%       { opacity: 1; }
+    }
+
+    .hex-glow { animation: hex-pulse 3s ease-in-out infinite; }
+
+    /* Flow line dash animation */
+    @keyframes flow-in {
+      from { stroke-dashoffset: 200; }
+      to   { stroke-dashoffset: 0; }
+    }
+
+    @keyframes flow-out {
+      from { stroke-dashoffset: -200; }
+      to   { stroke-dashoffset: 0; }
+    }
+
+    .line-in  { stroke-dasharray: 200; animation: flow-in  3s linear infinite; }
+    .line-out { stroke-dasharray: 200; animation: flow-out 3s linear infinite; }
+
+    /* ── Divider ──────────────────────────────────────────────────────────────── */
+    hr.div { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Section shell ───────────────────────────────────────────────────────── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 3rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.7rem, 2.8vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 2.5rem;
+      line-height: 1.2;
+    }
+
+    /* ── Why Teams Use RAVEN ──────────────────────────────────────────────────── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+
+    .why-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1.6rem;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .why-card:hover {
+      border-color: rgba(109, 40, 217, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .why-icon {
+      width: 38px;
+      height: 38px;
+      color: var(--accent-bright);
+      margin-bottom: 1.1rem;
+    }
+
+    .why-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.55rem;
+    }
+
+    .why-desc {
+      font-size: 0.855rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ── Example Investigation ────────────────────────────────────────────────── */
+    .example-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 3rem;
+    }
+
+    .example-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .example-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .example-left .section-title { margin-bottom: 0; }
+
+    .alert-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+    }
+
+    .alert-label {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      margin-bottom: 0.55rem;
+    }
+
+    .alert-text {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .example-arrow {
+      color: var(--text-dim);
+      font-size: 1.1rem;
+      text-align: center;
+      line-height: 1;
+      padding-top: 0.3rem;
+    }
+
+    .output-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .output-row {
+      display: grid;
+      grid-template-columns: 175px 1fr;
+      gap: 1.25rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-soft);
+      align-items: start;
+    }
+
+    .output-row:last-child { border-bottom: none; }
+
+    .out-key {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      padding-top: 2px;
+    }
+
+    .out-key svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .out-val {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .out-val.strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .out-val ol {
+      padding-left: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+    }
+
+    /* ── What RAVEN Produces ──────────────────────────────────────────────────── */
+    .produces-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+    }
+
+    .prod-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 1.6rem 0.5rem 1rem;
+    }
+
+    .prod-icon {
+      width: 34px;
+      height: 34px;
+      color: var(--accent-bright);
+    }
+
+    .prod-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    /* ── Final CTA ────────────────────────────────────────────────────────────── */
+    .cta-band {
+      background: #0F0F18;
+      border-top: 1px solid var(--border);
+    }
+
+    .cta-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3rem;
+    }
+
+    .cta-text h2 {
+      font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .cta-text p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .cta-btns {
+      display: flex;
+      gap: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Hero trust microcopy ────────────────────────────────────────────────── */
+    .hero-trust {
+      margin-top: 1.1rem;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      max-width: 380px;
+    }
+
+    /* ── Trust banner ────────────────────────────────────────────────────────── */
+    .trust-band {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: #0D0D14;
+    }
+
+    .trust-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.6rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .trust-items {
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .trust-check {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .trust-check svg {
+      width: 8px;
+      height: 8px;
+    }
+
+    .trust-note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    /* ── Proof section ───────────────────────────────────────────────────────── */
+    .proof-band {
+      border-top: 1px solid var(--border);
+    }
+
+    .proof-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3.5rem 3rem;
+    }
+
+    .proof-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 1.25rem;
+    }
+
+    .proof-items {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .proof-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .proof-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent-bright);
+      border-radius: 50%;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
+    /* ── CTA secondary paragraph ─────────────────────────────────────────────── */
+    .cta-sub {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      max-width: 480px;
+    }
+
+    .out-val ul {
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .out-val ul li::before {
+      content: "·";
+      color: var(--accent-bright);
+      margin-right: 0.45rem;
+      font-weight: 700;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.75rem 2rem;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────────────────── */
+    @media (max-width: 920px) {
+      .hero              { grid-template-columns: 1fr; gap: 3rem; padding: 3.5rem 2rem; }
+      .hero-p1, .hero-p2 { max-width: 100%; }
+      .why-grid          { grid-template-columns: 1fr; gap: 1rem; }
+      .example-layout    { grid-template-columns: 1fr; }
+      .example-arrow     { display: none; }
+      .produces-grid     { grid-template-columns: repeat(4, 1fr); }
+      .cta-inner         { flex-direction: column; text-align: center; }
+      .cta-btns          { justify-content: center; }
+    }
+
+    @media (max-width: 640px) {
+      nav               { padding: 0.85rem 1.5rem; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .section, .example-wrap { padding: 3.5rem 1.5rem; }
+      .hero             { padding: 3rem 1.5rem; }
+      .produces-grid    { grid-template-columns: repeat(3, 1fr); }
+      .output-row       { grid-template-columns: 1fr; gap: 0.4rem; }
+    }
+
+    @media (max-width: 460px) {
+      .produces-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ──────────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <svg class="nav-logo-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="17,2 31,10.5 31,23.5 17,32 3,23.5 3,10.5" fill="#160D30" stroke="#6D28D9" stroke-width="1.4"/>
+      <text x="17" y="23" text-anchor="middle" font-size="15" font-weight="900" fill="#8B5CF6" font-family="-apple-system, BlinkMacSystemFont, sans-serif">R</text>
+    </svg>
+    <div class="nav-logo-text">
+      <span class="nav-logo-name">RAVEN</span>
+      <span class="nav-logo-sub">Incident Intelligence</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#why" class="hide-xs">Why RAVEN</a>
+    <a href="#example" class="hide-xs">How it works</a>
+    <a href="/docs">API Docs</a>
+    <a href="#produces" class="hide-xs">Case Study</a>
+    <a href="#contact" class="nav-cta">Request Pilot Access</a>
+  </div>
+</nav>
+
+
+<!-- ── Hero ────────────────────────────────────────────────────────────────── -->
+<div class="hero">
+
+  <!-- Left: Text + CTA -->
+  <div class="hero-text">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Incident Intelligence
+    </div>
+
+    <h1>
+      Turning Signals<br>
+      Into <span class="hi">Decisions.</span>
+    </h1>
+
+    <p class="hero-p1">
+      Transform alerts into actionable context with priority, impact, evidence, hypotheses and recommended next steps.
+    </p>
+
+    <div class="cta-group">
+      <a href="mailto:contact@ravenrisk.dev" class="btn btn-primary">Request Pilot Access →</a>
+      <a href="/docs" class="btn btn-outline">View API Docs</a>
+    </div>
+    <p class="hero-trust">
+      Built using feedback from Engineering, DevOps and Security professionals.<br>
+      Currently onboarding a limited number of pilot participants.
+    </p>
+  </div>
+
+  <!-- Right: Signal flow diagram -->
+  <div class="hero-visual">
+    <svg viewBox="0 0 560 390" xmlns="http://www.w3.org/2000/svg" aria-label="Signals flowing through RAVEN context engine into decisions">
+      <defs>
+        <!-- Glow filter for lines -->
+        <filter id="f-line" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Strong glow for hex -->
+        <filter id="f-hex" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="10" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Outer ambient glow -->
+        <filter id="f-ambient" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="22"/>
+        </filter>
+
+        <!-- Input line gradient (left→center) -->
+        <linearGradient id="g-in" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#3B1A6E" stop-opacity="0.3"/>
+          <stop offset="60%"  stop-color="#6D28D9" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#8B5CF6" stop-opacity="1"/>
+        </linearGradient>
+
+        <!-- Output line gradient (center→right) -->
+        <linearGradient id="g-out" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#8B5CF6" stop-opacity="1"/>
+          <stop offset="40%"  stop-color="#6D28D9" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#3B1A6E" stop-opacity="0.3"/>
+        </linearGradient>
+
+        <!-- Card fill gradient -->
+        <linearGradient id="g-card" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#141420"/>
+          <stop offset="100%" stop-color="#0F0F18"/>
+        </linearGradient>
+
+        <!-- Center hex fill gradient -->
+        <radialGradient id="g-hexfill" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#1C0E40"/>
+          <stop offset="100%" stop-color="#0B0B14"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ── Ambient center glow ── -->
+      <ellipse cx="278" cy="193" rx="100" ry="88" fill="#5B21B6" opacity="0.12" filter="url(#f-ambient)" class="hex-glow"/>
+      <ellipse cx="278" cy="193" rx="55"  ry="48" fill="#7C3AED" opacity="0.08" filter="url(#f-ambient)"/>
+
+      <!-- Scattered particle dots around center -->
+      <circle cx="215" cy="148" r="1.4" fill="#8B5CF6" opacity="0.55"/>
+      <circle cx="225" cy="236" r="1.0" fill="#8B5CF6" opacity="0.38"/>
+      <circle cx="310" cy="138" r="1.4" fill="#8B5CF6" opacity="0.48"/>
+      <circle cx="322" cy="248" r="1.0" fill="#8B5CF6" opacity="0.35"/>
+      <circle cx="252" cy="132" r="1.1" fill="#8B5CF6" opacity="0.30"/>
+      <circle cx="300" cy="258" r="1.3" fill="#8B5CF6" opacity="0.42"/>
+      <circle cx="240" cy="172" r="0.9" fill="#8B5CF6" opacity="0.32"/>
+      <circle cx="316" cy="215" r="1.0" fill="#8B5CF6" opacity="0.28"/>
+      <circle cx="260" cy="248" r="0.8" fill="#8B5CF6" opacity="0.25"/>
+      <circle cx="296" cy="140" r="0.9" fill="#8B5CF6" opacity="0.30"/>
+
+      <!-- ── Input → Center connecting lines (with glow) ── -->
+      <!-- LOGS cy=100 -->
+      <path d="M 132,100 C 190,100 218,193 238,193" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 132,100 C 190,100 218,193 238,193" stroke="url(#g-in)" stroke-width="1.2" fill="none" class="line-in"/>
+      <!-- ALERTS cy=152 -->
+      <path d="M 132,152 C 190,152 215,193 238,193" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 132,152 C 190,152 215,193 238,193" stroke="url(#g-in)" stroke-width="1.2" fill="none" class="line-in" style="animation-delay:-0.6s"/>
+      <!-- EVENTS cy=204 -->
+      <path d="M 132,204 C 190,204 220,193 238,193" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 132,204 C 190,204 220,193 238,193" stroke="url(#g-in)" stroke-width="1.2" fill="none" class="line-in" style="animation-delay:-1.2s"/>
+      <!-- METRICS cy=256 -->
+      <path d="M 132,256 C 190,256 215,193 238,193" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 132,256 C 190,256 215,193 238,193" stroke="url(#g-in)" stroke-width="1.2" fill="none" class="line-in" style="animation-delay:-1.8s"/>
+      <!-- THREATS cy=308 -->
+      <path d="M 132,308 C 190,308 218,193 238,193" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 132,308 C 190,308 218,193 238,193" stroke="url(#g-in)" stroke-width="1.2" fill="none" class="line-in" style="animation-delay:-2.4s"/>
+
+      <!-- ── Center → Output connecting lines ── -->
+      <!-- PRIORITY cy=116 -->
+      <path d="M 318,193 C 358,193 380,116 422,116" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 318,193 C 358,193 380,116 422,116" stroke="url(#g-out)" stroke-width="1.2" fill="none" class="line-out"/>
+      <!-- IMPACT cy=168 -->
+      <path d="M 318,193 C 358,193 378,168 422,168" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 318,193 C 358,193 378,168 422,168" stroke="url(#g-out)" stroke-width="1.2" fill="none" class="line-out" style="animation-delay:-0.75s"/>
+      <!-- EVIDENCE cy=220 -->
+      <path d="M 318,193 C 358,193 378,220 422,220" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 318,193 C 358,193 378,220 422,220" stroke="url(#g-out)" stroke-width="1.2" fill="none" class="line-out" style="animation-delay:-1.5s"/>
+      <!-- NEXT STEP cy=272 -->
+      <path d="M 318,193 C 358,193 380,272 422,272" stroke="#6D28D9" stroke-width="2.5" fill="none" opacity="0.18" filter="url(#f-line)"/>
+      <path d="M 318,193 C 358,193 380,272 422,272" stroke="url(#g-out)" stroke-width="1.2" fill="none" class="line-out" style="animation-delay:-2.25s"/>
+
+      <!-- ── Input Cards ── -->
+
+      <!-- LOGS: rect x=0 y=81 w=132 h=38 -->
+      <rect x="0" y="81" width="132" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- grid icon -->
+      <rect x="12" y="93" width="5" height="4" rx="1" fill="#8B5CF6" opacity="0.75"/>
+      <rect x="12" y="99" width="5" height="4" rx="1" fill="#8B5CF6" opacity="0.45"/>
+      <rect x="19" y="93" width="3" height="4" rx="1" fill="#8B5CF6" opacity="0.55"/>
+      <rect x="19" y="99" width="3" height="4" rx="1" fill="#8B5CF6" opacity="0.35"/>
+      <text x="27" y="104" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">LOGS</text>
+
+      <!-- ALERTS: rect x=0 y=133 w=132 h=38 -->
+      <rect x="0" y="133" width="132" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- bell icon -->
+      <path d="M 18,143 Q18,137 24,137 Q30,137 30,143 L30,148 Q30,151 24,152 Q18,151 18,148 Z" fill="none" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="22" y1="152" x2="22" y2="154" stroke="#8B5CF6" stroke-width="1.2" opacity="0.55"/>
+      <line x1="26" y1="152" x2="26" y2="154" stroke="#8B5CF6" stroke-width="1.2" opacity="0.55"/>
+      <text x="36" y="156" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">ALERTS</text>
+
+      <!-- EVENTS: rect x=0 y=185 w=132 h=38 -->
+      <rect x="0" y="185" width="132" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- calendar icon -->
+      <rect x="13" y="193" width="16" height="15" rx="2" fill="none" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="17" y1="193" x2="17" y2="191" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="25" y1="193" x2="25" y2="191" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="13" y1="198" x2="29" y2="198" stroke="#8B5CF6" stroke-width="0.9" opacity="0.45"/>
+      <text x="34" y="207" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">EVENTS</text>
+
+      <!-- METRICS: rect x=0 y=237 w=132 h=38 -->
+      <rect x="0" y="237" width="132" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- bar chart icon -->
+      <rect x="12" y="255" width="4" height="8"  rx="1" fill="#8B5CF6" opacity="0.45"/>
+      <rect x="18" y="250" width="4" height="13" rx="1" fill="#8B5CF6" opacity="0.65"/>
+      <rect x="24" y="247" width="4" height="16" rx="1" fill="#8B5CF6" opacity="0.80"/>
+      <text x="33" y="260" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">METRICS</text>
+
+      <!-- THREATS: rect x=0 y=289 w=132 h=38 -->
+      <rect x="0" y="289" width="132" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- shield icon -->
+      <path d="M 21,296 L13,299 L13,307 Q13,313 21,316 Q29,313 29,307 L29,299 Z" fill="none" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <text x="35" y="311" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">THREATS</text>
+
+      <!-- ── Center Hexagon ── -->
+      <!-- Outer glow ring -->
+      <polygon points="278,138 321,162 321,224 278,248 235,224 235,162"
+        fill="none" stroke="#5B21B6" stroke-width="1" opacity="0.5" filter="url(#f-hex)" class="hex-glow"/>
+      <!-- Main hex -->
+      <polygon points="278,145 317,167 317,221 278,243 239,221 239,167"
+        fill="url(#g-hexfill)" stroke="#6D28D9" stroke-width="1.5"/>
+      <!-- Inner accent ring -->
+      <polygon points="278,152 310,172 310,216 278,236 246,216 246,172"
+        fill="none" stroke="#4C1D95" stroke-width="0.6" opacity="0.55"/>
+      <!-- R mark -->
+      <text x="278" y="203" text-anchor="middle" font-size="24" font-weight="900" fill="#8B5CF6"
+        font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif">R</text>
+      <!-- CONTEXT ENGINE label -->
+      <text x="278" y="268" text-anchor="middle" font-size="8" font-weight="700" fill="#6D28D9"
+        letter-spacing="2.8" font-family="-apple-system, sans-serif">CONTEXT ENGINE</text>
+
+      <!-- ── Output Cards ── -->
+
+      <!-- PRIORITY: rect x=422 y=97 w=138 h=38 -->
+      <rect x="422" y="97" width="138" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- crosshair icon -->
+      <circle cx="434" cy="116" r="7"   fill="none" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="434" cy="116" r="2.5" fill="none" stroke="#8B5CF6" stroke-width="1.1" opacity="0.65"/>
+      <line x1="434" y1="109" x2="434" y2="107" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="434" y1="123" x2="434" y2="125" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="427" y1="116" x2="425" y2="116" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <line x1="441" y1="116" x2="443" y2="116" stroke="#8B5CF6" stroke-width="1.2" opacity="0.75"/>
+      <text x="447" y="120" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">PRIORITY</text>
+
+      <!-- IMPACT: rect x=422 y=149 w=138 h=38 -->
+      <rect x="422" y="149" width="138" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- trending-up icon -->
+      <path d="M 428,172 L 434,165 L 440,169 L 448,160" fill="none" stroke="#8B5CF6" stroke-width="1.4" stroke-linecap="round" opacity="0.8"/>
+      <polyline points="445,160 448,160 448,163" fill="none" stroke="#8B5CF6" stroke-width="1.4" stroke-linecap="round" opacity="0.8"/>
+      <text x="454" y="173" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">IMPACT</text>
+
+      <!-- EVIDENCE: rect x=422 y=201 w=138 h=38 -->
+      <rect x="422" y="201" width="138" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- search icon -->
+      <circle cx="432" cy="216" r="5.5" fill="none" stroke="#8B5CF6" stroke-width="1.3" opacity="0.78"/>
+      <line x1="436" y1="220" x2="440" y2="224" stroke="#8B5CF6" stroke-width="1.6" stroke-linecap="round" opacity="0.78"/>
+      <text x="447" y="225" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">EVIDENCE</text>
+
+      <!-- NEXT STEP: rect x=422 y=253 w=138 h=38 -->
+      <rect x="422" y="253" width="138" height="38" rx="7" fill="url(#g-card)" stroke="#1E1E30" stroke-width="1"/>
+      <!-- play triangle -->
+      <polygon points="428,262 428,280 440,271" fill="#8B5CF6" opacity="0.78"/>
+      <text x="447" y="276" font-size="9.5" font-weight="700" fill="#CCCCDD" letter-spacing="1.8" font-family="-apple-system, sans-serif">NEXT STEP</text>
+    </svg>
+  </div>
+</div><!-- /hero -->
+
+
+<div class="trust-band">
+  <div class="trust-inner">
+    <div class="trust-items">
+      <div class="trust-item">
+        <span class="trust-check">
+          <svg viewBox="0 0 8 8" fill="none"><polyline points="1,4 3,6.5 7,1.5" stroke="#4ADE80" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        No integration required
+      </div>
+      <div class="trust-item">
+        <span class="trust-check">
+          <svg viewBox="0 0 8 8" fill="none"><polyline points="1,4 3,6.5 7,1.5" stroke="#4ADE80" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        No installation required
+      </div>
+      <div class="trust-item">
+        <span class="trust-check">
+          <svg viewBox="0 0 8 8" fill="none"><polyline points="1,4 3,6.5 7,1.5" stroke="#4ADE80" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        No access to production systems
+      </div>
+    </div>
+    <p class="trust-note">Evaluate RAVEN using anonymized alerts and incident examples.</p>
+  </div>
+</div>
+
+
+<!-- ── Why Teams Use RAVEN ─────────────────────────────────────────────────── -->
+<section class="section" id="why">
+  <h2 class="section-title">Why Teams Use RAVEN</h2>
+  <div class="why-grid">
+
+    <div class="why-card">
+      <!-- Network nodes icon -->
+      <svg class="why-icon" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="3"   fill="currentColor" opacity="0.9"/>
+        <circle cx="7"  cy="13" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.65"/>
+        <circle cx="7"  cy="25" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.65"/>
+        <circle cx="31" cy="13" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.65"/>
+        <circle cx="31" cy="25" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.65"/>
+        <line x1="9"  y1="13.5" x2="16" y2="17.5" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+        <line x1="9"  y1="24.5" x2="16" y2="20.5" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+        <line x1="22" y1="17.5" x2="29" y2="13.5" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+        <line x1="22" y1="20.5" x2="29" y2="24.5" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+      </svg>
+      <div class="why-title">Investigation Context</div>
+      <div class="why-desc">Automatically connect signals and provide the information engineers need to start investigating.</div>
+    </div>
+
+    <div class="why-card">
+      <!-- Crosshair icon -->
+      <svg class="why-icon" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="12" stroke="currentColor" stroke-width="1.4" opacity="0.45"/>
+        <circle cx="19" cy="19" r="7"  stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+        <circle cx="19" cy="19" r="2.5" fill="currentColor" opacity="0.9"/>
+        <line x1="19" y1="5"  x2="19" y2="3"  stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+        <line x1="19" y1="33" x2="19" y2="35" stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+        <line x1="5"  y1="19" x2="3"  y2="19" stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+        <line x1="33" y1="19" x2="35" y2="19" stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+      </svg>
+      <div class="why-title">Operational Impact</div>
+      <div class="why-desc">Identify which incidents matter most and understand the potential business impact.</div>
+    </div>
+
+    <div class="why-card">
+      <!-- Lightning bolt icon -->
+      <svg class="why-icon" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 22,5 L 9,21 L 19,21 L 16,33 L 29,17 L 19,17 Z"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" opacity="0.9"/>
+      </svg>
+      <div class="why-title">Recommended Next Steps</div>
+      <div class="why-desc">Reduce uncertainty by surfacing evidence, hypotheses and investigation starting points.</div>
+    </div>
+
+  </div>
+</section>
+
+
+<hr class="div" />
+
+
+<!-- ── Example Investigation ───────────────────────────────────────────────── -->
+<div class="example-wrap" id="example">
+  <div class="example-layout">
+
+    <div class="example-left">
+      <h2 class="section-title">Example Investigation</h2>
+      <div class="alert-card">
+        <div class="alert-label">Alert</div>
+        <div class="alert-text">87 login failures in 5 minutes<br>LDAP_TIMEOUT<br>Authentication service unavailable</div>
+      </div>
+      <div class="example-arrow">→</div>
+    </div>
+
+    <div class="output-panel">
+      <div class="output-row">
+        <div class="out-key">
+          <!-- crosshair -->
+          <svg viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="5"   stroke="currentColor" stroke-width="1.1"/>
+            <circle cx="6.5" cy="6.5" r="2.2" stroke="currentColor" stroke-width="1.1"/>
+            <circle cx="6.5" cy="6.5" r="0.9" fill="currentColor"/>
+          </svg>
+          Priority
+        </div>
+        <div class="out-val strong">High</div>
+      </div>
+
+      <div class="output-row">
+        <div class="out-key">
+          <!-- trending up -->
+          <svg viewBox="0 0 13 13" fill="none">
+            <path d="M 1,10 L 4.5,6 L 7,8 L 12,2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <polyline points="10,2 12,2 12,4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Potential Impact
+        </div>
+        <div class="out-val">500 users affected</div>
+      </div>
+
+      <div class="output-row">
+        <div class="out-key">
+          <!-- search -->
+          <svg viewBox="0 0 13 13" fill="none">
+            <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <line x1="8.5" y1="8.5" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Evidence
+        </div>
+        <div class="out-val">
+          <ul>
+            <li>LDAP timeout detected</li>
+            <li>Authentication unavailable</li>
+            <li>Spike in failed logins</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="output-row">
+        <div class="out-key">
+          <!-- lightbulb approximation -->
+          <svg viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="5.5" r="3.2" stroke="currentColor" stroke-width="1.1" opacity="0.85"/>
+            <path d="M 4.5,8.5 L 4.5,11.5 L 8.5,11.5 L 8.5,8.5" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" opacity="0.85"/>
+            <line x1="5.5" y1="11.5" x2="7.5" y2="11.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+          </svg>
+          Hypothesis
+        </div>
+        <div class="out-val">Possible LDAP / SSO failure</div>
+      </div>
+
+      <div class="output-row">
+        <div class="out-key">
+          <!-- play triangle -->
+          <svg viewBox="0 0 13 13" fill="none">
+            <polygon points="2,1.5 2,11.5 11,6.5" fill="currentColor" opacity="0.85"/>
+          </svg>
+          Recommended Next Step
+        </div>
+        <div class="out-val">Investigate LDAP and SSO services</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<hr class="div" />
+
+
+<!-- ── What RAVEN Produces ─────────────────────────────────────────────────── -->
+<section class="section" id="produces">
+  <h2 class="section-title">What RAVEN Produces</h2>
+  <div class="produces-grid">
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="11" stroke="currentColor" stroke-width="1.4" opacity="0.45"/>
+        <circle cx="17" cy="17" r="6.5" stroke="currentColor" stroke-width="1.4" opacity="0.65"/>
+        <circle cx="17" cy="17" r="2.5" fill="currentColor" opacity="0.9"/>
+      </svg>
+      <span class="prod-label">Priority</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <path d="M 4,26 L 10,18 L 16,22 L 26,10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <polyline points="23,10 26,10 26,13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <span class="prod-label">Impact</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <circle cx="14" cy="14" r="8.5" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="20.5" y1="20.5" x2="29" y2="29" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="prod-label">Evidence</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <rect x="5" y="4" width="24" height="26" rx="3" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="10" y1="12" x2="24" y2="12" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+        <line x1="10" y1="17" x2="24" y2="17" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+        <line x1="10" y1="22" x2="18" y2="22" stroke="currentColor" stroke-width="1.2" opacity="0.65"/>
+      </svg>
+      <span class="prod-label">Context</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="11" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M 17,9 L 17,17 L 23,21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="prod-label">Historical Context</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="13" r="5.5" stroke="currentColor" stroke-width="1.4" opacity="0.75"/>
+        <path d="M 13,18.5 L 13,28 L 17,24.5 L 21,28 L 21,18.5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" opacity="0.9"/>
+        <line x1="17" y1="7.5" x2="17" y2="5.5" stroke="currentColor" stroke-width="1.4" opacity="0.45"/>
+        <line x1="14.5" y1="8.3" x2="12.5" y2="6.8" stroke="currentColor" stroke-width="1.1" opacity="0.3"/>
+        <line x1="19.5" y1="8.3" x2="21.5" y2="6.8" stroke="currentColor" stroke-width="1.1" opacity="0.3"/>
+      </svg>
+      <span class="prod-label">Hypothesis</span>
+    </div>
+
+    <div class="prod-item">
+      <svg class="prod-icon" viewBox="0 0 34 34" fill="none">
+        <polygon points="8,6 8,28 27,17" fill="currentColor" opacity="0.82"/>
+      </svg>
+      <span class="prod-label">Recommended Steps</span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── Proof band ───────────────────────────────────────────────────────────── -->
+<div class="proof-band">
+  <div class="proof-inner">
+    <p class="proof-label">Built for teams investigating</p>
+    <div class="proof-items">
+      <div class="proof-chip"><span class="proof-dot"></span>Authentication failures</div>
+      <div class="proof-chip"><span class="proof-dot"></span>Service outages</div>
+      <div class="proof-chip"><span class="proof-dot"></span>Deployment incidents</div>
+      <div class="proof-chip"><span class="proof-dot"></span>Infrastructure anomalies</div>
+      <div class="proof-chip"><span class="proof-dot"></span>Security-related operational alerts</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Final CTA ───────────────────────────────────────────────────────────── -->
+<div class="cta-band" id="contact">
+  <div class="cta-inner">
+    <div class="cta-text">
+      <h2>Accelerate Incident Investigations</h2>
+      <p>RAVEN is currently in closed pilot. We work directly with engineering and SRE teams to validate the platform against real investigation workflows.</p>
+      <p class="cta-sub">Pilot participants can evaluate the platform using anonymized alerts and real investigation scenarios. No integration required during the initial evaluation.</p>
+    </div>
+    <div class="cta-btns">
+      <a href="mailto:contact@ravenrisk.dev" class="btn btn-primary">Request Pilot Access →</a>
+      <a href="#example" class="btn btn-outline">View Example Analysis</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Footer ──────────────────────────────────────────────────────────────── -->
+<footer>
+  © 2026 RAVEN — Incident Intelligence · All rights reserved.
+</footer>
+
+</body>
+</html>
