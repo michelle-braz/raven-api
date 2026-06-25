@@ -1,162 +1,223 @@
-# RAVEN by NOVA
+# RAVEN — Risk Decision API · Closed Beta Guide
 
-**Real-time risk scoring for every user action — one API call, under 5ms.**
+> **This document is for approved beta testers only.**
+> Base URL: `https://YOUR_RAVEN_APP.railway.app` ← replace with your deployment URL before sharing
 
 ---
 
-## What It Does
+## What RAVEN does
 
-RAVEN scores every event — login attempt, transaction, access request — and returns a risk verdict in milliseconds. No ML pipeline to maintain. No model drift. No false positives from stale training data. Rules are explicit, auditable, and tunable.
+You send an event description. RAVEN returns a verdict: **ALLOW**, **REVIEW**, or **BLOCK** — plus a score, a reason code, and a plain-English explanation.
+
+You don't interpret scores. You act on the decision.
+
+---
+
+## Step 1 — Get your API key
+
+Email **beta@ravenrisk.dev** with your name and use case.  
+You'll receive a private key in the format `raven_beta_XXXXXXXXXXXXXXXX`.
+
+Each key is unique to you. Do not share it.
+
+---
+
+## Step 2 — Send your first request
+
+Replace `YOUR_KEY` with your assigned beta key.  
+Replace `YOUR_API_URL` with the production base URL.
 
 ```bash
-curl -X POST https://api.nova.dev/evaluate \
-  -H "X-API-Key: your_key" \
+curl -X POST https://YOUR_API_URL/v1/analyze \
+  -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"action": "login_failed", "ip": "192.168.1.1", "attempts": 5}'
+  -d '{
+    "message": "failed login attempt from unknown IP address",
+    "source": "iam"
+  }'
 ```
+
+That's the entire API call. Two fields in. Decision out.
+
+---
+
+## Step 3 — Read the response
 
 ```json
 {
-  "risk_score": 80,
-  "level": "HIGH",
-  "signals": ["attempts>=3", "action=login_failed", "unknown_ip"],
-  "plan": "free"
+  "message":      "failed login attempt from unknown IP address",
+  "source":       "iam",
+  "risk_score":   0.87,
+  "severity":     "HIGH",
+  "decision":     "BLOCK",
+  "reason_code":  "HIGH_RISK_SCORE",
+  "explanation":  "Risk score exceeded the blocking threshold.",
+  "incident_id":  "evt_a1b2c3d4",
+  "tier":         "pro",
+  "explain":      null
 }
 ```
 
----
+**The three fields you care about:**
 
-## Architecture
-
-```
-NOVA (company)
-└── RAVEN  ─  product API layer (FastAPI, auth, rate limiting)
-    └── SENTINEL  ─  risk intelligence engine (pure Python, zero HTTP deps)
-        ├── core/      fast synchronous evaluate() for the API
-        └── pipeline/  async 4-layer ingestion pipeline for high-volume streams
-```
-
-```
-Raven/
-├── apps/
-│   ├── api/          RAVEN API — FastAPI, API key auth, rate limiting
-│   └── frontend/     landing page
-├── services/
-│   └── sentinel/     SENTINEL engine — domain logic only, no FastAPI coupling
-├── packages/
-│   └── shared/       cross-cutting primitives
-├── tests/            pytest suite
-└── pyproject.toml
-```
-
-**Boundaries enforced:**
-- `sentinel` has zero FastAPI dependency — pure Python, zero runtime coupling to the API layer
-- `apps/api` is a thin HTTP adapter over `sentinel.core.engine.evaluate()`
-- Rules are pure functions: deterministic, testable in isolation
-
----
-
-## Quickstart
-
-```bash
-git clone <repo> && cd Raven
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e .
-export RAVEN_API_KEY=your-secret-key               # Windows: set RAVEN_API_KEY=your-secret-key
-python -m raven.api.main
-```
-
-API available at `http://localhost:8000` — interactive docs at `/docs`.
-All endpoints (except `/health`) require the header `X-API-Key: your-secret-key`.
-
----
-
-## API
-
-### `POST /evaluate`
-
-**Header:** `X-API-Key: nova_free_demo`
-
-| Field | Type | Description |
-|---|---|---|
-| `user_id` | string/int | User identifier (optional) |
-| `action` | string | Event type (e.g. `login_failed`, `purchase`) |
-| `ip` | string | Client IP address |
-| `attempts` | int | Number of consecutive attempts |
-
-**Response:**
-
-| Field | Description |
+| Field | What it means |
 |---|---|
-| `risk_score` | 0–100 integer |
-| `level` | `LOW` / `MEDIUM` / `HIGH` |
-| `signals` | Named rules that fired |
-| `plan` | `free` or `pro` |
+| `decision` | What to do: `ALLOW`, `REVIEW`, or `BLOCK` |
+| `explanation` | Why in plain English |
+| `incident_id` | Stable ID — same event pattern always gets the same ID |
 
-### `GET /health`
+---
 
+## Decision reference
+
+| `decision` | `risk_score` range | What it means |
+|---|---|---|
+| `ALLOW` | < 0.50 | Safe to proceed |
+| `REVIEW` | 0.50 – 0.79 | Flag for manual review |
+| `BLOCK` | ≥ 0.80 | Stop — risk exceeds threshold |
+
+---
+
+## The `source` field
+
+`source` tells RAVEN where the event originated. It adjusts scoring weights.
+
+| Value | Use for |
+|---|---|
+| `iam` | Identity and access events (logins, privilege changes) |
+| `network` | Traffic, firewall, connection events |
+| `application` | App-layer events (form submissions, API calls, errors) |
+| `infrastructure` | Server, container, or cloud events |
+| `audit` | Compliance and audit log events |
+| `unknown` | Default — use when source is unclear |
+
+---
+
+## Public endpoints (no key required)
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /` | Product landing page |
+| `GET /health` | Health check (`{"status": "ok"}`) |
+| `GET /status` | Service uptime and version |
+| `GET /docs` | Interactive API documentation (Swagger UI) |
+
+---
+
+## Rate limits
+
+- **30 requests / minute** per IP address
+- Exceeding the limit returns `HTTP 429`
+
+---
+
+## Error reference
+
+**Auth gate errors** (missing/invalid key) use this envelope:
 ```json
-{"status": "ok", "service": "nova-risk-api", "version": "1.0.0"}
+{ "error": "missing_api_key", "message": "API key required (beta access)" }
+{ "error": "invalid_api_key", "message": "Invalid or inactive beta key" }
 ```
 
----
+**API errors** (bad request, rate limit) use FastAPI's standard envelope:
+```json
+{ "detail": "Rate limit exceeded (30 req/min per IP)." }
+{ "detail": [{ "loc": ["body", "source"], "msg": "...", "type": "..." }] }
+```
 
-## Risk Scoring
-
-| Rule | Score | Signal |
-|---|---|---|
-| `attempts >= 3` | +40 | `attempts>=3` |
-| `action == login_failed` | +30 | `action=login_failed` |
-| IP in suspicious set | +10 | `unknown_ip` |
-| Maximum score | 100 | — |
-
-Thresholds: **LOW** < 40 · **MEDIUM** 40–69 · **HIGH** ≥ 70
-
----
-
-## API Key Tiers
-
-| Tier | Limit | Key (demo) |
-|---|---|---|
-| Free | 100 req/day | `nova_free_demo` |
-| Pro | 10,000 req/day | `nova_pro_demo` |
-
-Production: set `RAVEN_API_KEY` — all requests must present this key in the `X-API-Key` header.
-Dev only (when `RAVEN_API_KEY` is unset): demo keys `nova_free_demo` (100 req/day) and `nova_pro_demo` (10,000 req/day) are accepted.
+| HTTP status | Meaning |
+|---|---|
+| `401` | No `X-API-Key` header sent |
+| `403` | Key not recognized or revoked |
+| `422` | Request body failed schema validation |
+| `429` | Rate limit exceeded (30 req/min per IP, or daily key quota) |
+| `500` | Internal error — contact beta@ravenrisk.dev with the full response body |
 
 ---
 
-## Development
+## Step 4 — Send feedback
+
+After testing, reply to your beta invitation email with:
+
+1. What you tried to detect
+2. Whether the decisions matched your expectations
+3. Any friction you hit during integration
+
+Feedback directly shapes what gets built next.
+
+---
+
+## Quick test matrix
+
+Try these to verify your key works and see the full decision range:
 
 ```bash
-# Install in editable mode
-pip install -e .
+# Expect: BLOCK
+curl -X POST https://YOUR_API_URL/v1/analyze \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"message": "unauthorized privilege escalation on production database", "source": "iam"}'
 
-# Run tests
-pytest -q
+# Expect: REVIEW
+curl -X POST https://YOUR_API_URL/v1/analyze \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"message": "unusual outbound connection to external IP", "source": "network"}'
 
-# Validate scoring scenarios
-python scripts/validate_nova_product.py
-
-# Check a single event inline
-python -c "from raven.sentinel.core.engine import evaluate; print(evaluate({'action':'login_failed','ip':'192.168.1.1','attempts':5}))"
+# Expect: ALLOW
+curl -X POST https://YOUR_API_URL/v1/analyze \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"message": "user login successful from registered device", "source": "application"}'
 ```
 
 ---
 
-## Deployment
+## Did RAVEN help? — Report a decision
 
-Procfile included for Railway / Render / Fly.io:
+Every `/v1/analyze` response includes `request_id` and `impact_feedback_endpoint`.  
+After acting on a recommendation, send one more request to close the loop:
 
+```bash
+curl -X POST https://YOUR_API_URL/beta/decision-impact \
+  -H "X-API-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "incident_id":              "<from analyze response>",
+    "request_id":               "<from analyze response>",
+    "decision_taken":           "BLOCK",
+    "action_taken":             "Blocked suspicious login attempt",
+    "confidence":               4,
+    "replaced_manual_process":  true,
+    "time_saved_minutes":       15,
+    "comments":                 "Would normally require a manual review ticket"
+  }'
 ```
-web: uvicorn raven.api.main:app --host 0.0.0.0 --port $PORT
-```
 
-Environment variables:
-- `RAVEN_API_KEY` — **required**; all API requests must present this key in `X-API-Key` header
-- `PORT` — set automatically by the platform
-- `HOST` — bind address (default `0.0.0.0`)
-- `LOG_LEVEL` — uvicorn log level (default `info`)
-- `SENTINEL_WEBHOOK_URL` — optional outbound webhook for HIGH/CRITICAL alerts
-- `FREE_API_KEYS` — dev only; ignored when `RAVEN_API_KEY` is set
-- `PRO_API_KEYS` — dev only; ignored when `RAVEN_API_KEY` is set
+`decision_taken` options: `ACCEPT` · `REVIEW` · `BLOCK` · `IGNORE` · `INVESTIGATE` · `OTHER`
+
+`confidence` scale: 1 (guessing) → 5 (certain RAVEN was right)
+
+---
+
+## North Star Metric
+
+RAVEN's primary KPI is:
+
+> **Number of real decisions influenced.**
+
+Not:
+- lines of code
+- API calls
+- architecture complexity
+- dashboards
+- ML sophistication
+
+Success means: a real person received a RAVEN recommendation and changed or accelerated a real decision because of it.
+
+This is measured via `POST /beta/decision-impact`. Every submission counts directly toward the North Star.
+
+---
+
+## Need help?
+
+**Email:** beta@ravenrisk.dev  
+**Swagger UI:** `https://YOUR_API_URL/docs`  
+**Service status:** `https://YOUR_API_URL/status`
